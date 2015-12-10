@@ -8,7 +8,7 @@
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
 
-// using boost for file-system handling
+// using boost for file-system handling / cmd_options
 #include "boost/program_options.hpp"
 #include "boost/filesystem.hpp"
 

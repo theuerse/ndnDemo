@@ -16,9 +16,9 @@ ndn::Producer::~Producer()
 void ndn::Producer::run()
 {
     m_face.setInterestFilter(this->prefix,
-                             bind(&Producer::onInterest, this, _1, _2),
+                             bind(&ndn::Producer::onInterest, this, _1, _2),
                              RegisterPrefixSuccessCallback(),
-                             bind(&Producer::onRegisterFailed, this, _1, _2));
+                             bind(&ndn::Producer::onRegisterFailed, this, _1, _2));
     m_face.processEvents();
 }
 
