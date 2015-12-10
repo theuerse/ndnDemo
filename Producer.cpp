@@ -40,6 +40,14 @@ string ndn::Producer::generateContent(const int length)
     return content;
 }
 
+// get file-content
+string ndn::Producer::getFileContent(string interestName)
+{
+    boost::filesystem::path sourcePath(this->document_root + "/" + interestName);
+    cout << "trying to get " << sourcePath << endl;
+    return "ok";
+}
+
 // react to arrival of a Interest-Package
 void ndn::Producer::onInterest(const InterestFilter& filter, const Interest& interest)
 {
@@ -50,6 +58,7 @@ void ndn::Producer::onInterest(const InterestFilter& filter, const Interest& int
 
     // DEBUG: have a look at infos in Interest
     cout << "Interest-name:" << interest.getName() << endl;
+    // TODO: string cast? string aha = ndn::Producer::getFileContent(interest.getName());
 
     dataName.appendVersion();  // add "version" component (current UNIX timestamp in milliseconds)
 

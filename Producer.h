@@ -27,6 +27,7 @@ class Producer
         string generateContent(const int length);
         void onInterest(const InterestFilter& filter, const Interest& interest);
         void onRegisterFailed(const Name& prefix, const string& reason);
+        string getFileContent(string interestName);
 
         Face m_face;
         KeyChain m_keyChain;
