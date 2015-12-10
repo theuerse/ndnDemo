@@ -134,6 +134,13 @@ int main(int argc, char** argv)
     freshness_time = vm["freshness-time"].as<int>();
   }
 
+  // fail if document-root does not exist
+  if(!boost::filesystem::is_directory(boost::filesystem::status(vm["document-root"].as<string>())))
+  {
+    throw invalid_argument("document-root does not exist");
+  }
+  cout << "document-root initialized with: " << vm["document-root"].as<string>() << endl;
+
   // create new Producer instance with given parameters
   ndn::Producer producer(vm["prefix"].as<string>(),
                          vm["document-root"].as<string>(),
