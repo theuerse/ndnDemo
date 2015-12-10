@@ -1,8 +1,9 @@
 #include "Producer.h"
 // public methods
-ndn::Producer::Producer(string prefix, int data_size, int freshness_seconds)
+ndn::Producer::Producer(string prefix, string document_root, int data_size, int freshness_seconds)
 {
     this->prefix = prefix;
+    this->document_root = document_root;
     this-> data_size = data_size;
     this->freshness_seconds = freshness_seconds;
 }
@@ -46,6 +47,10 @@ void ndn::Producer::onInterest(const InterestFilter& filter, const Interest& int
 
     // Create new name, based on Interest's name
     Name dataName(interest.getName());
+
+    // DEBUG: have a look at infos in Interest
+    cout << "Interest-name:" << interest.getName() << endl;
+
     dataName.appendVersion();  // add "version" component (current UNIX timestamp in milliseconds)
 
     string content = generateContent(data_size);
@@ -82,6 +87,7 @@ int main(int argc, char** argv)
   options_description desc("Programm Options");
   desc.add_options ()
       ("prefix,p", value<string>()->required (), "Prefix the Producer listens too. (Required)")
+      ("document-root,b", value<string>()->required (), "The directory open to requests (Interests). (Required)")
       ("data-size,s", value<int>()->required (), "The size of the datapacket in bytes. (Required)")
       ("freshness-time,f", value<int>(), "Freshness time of the content in seconds. (Default 5min)");
 
@@ -100,10 +106,11 @@ int main(int argc, char** argv)
   {
     // user forgot to provide a required option
     cerr << "prefix         ... Prefix the Producer listens to. (Required)" << endl;
+    cerr << "document-root  ... The directory open to requests (Interests). (Required)" << endl;
     cerr << "data-size      ... The size of the datapacket in bytes  (Required)" << endl;
     cerr << "freshness-time ... Freshness time of the content in seconds (Default 5 min)" << endl;
-    cerr << "usage-example: " << "./" << appName << " --prefix foo --data-size 12" << endl;
-    cerr << "usage-example: " << "./" << appName << " --prefix foo --data-size 12 --freshness-time 23" << endl;
+    cerr << "usage-example: " << "./" << appName << " --prefix foo --document-root ./ --data-size 12" << endl;
+    cerr << "usage-example: " << "./" << appName << " --prefix foo --document-root ./ --data-size 12 --freshness-time 23" << endl;
 
     cerr << "ERROR: " << e.what() << endl << endl;
     return -1;
@@ -129,6 +136,7 @@ int main(int argc, char** argv)
 
   // create new Producer instance with given parameters
   ndn::Producer producer(vm["prefix"].as<string>(),
+                         vm["document-root"].as<string>(),
                          vm["data-size"].as<int>(),
                          freshness_time);
 

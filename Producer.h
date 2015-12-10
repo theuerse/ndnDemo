@@ -19,18 +19,19 @@ namespace ndn {
 class Producer
 {
     public:
-        Producer(string prefix, int data_size, int freshness_seconds);
+        Producer(string prefix, string document_root, int data_size, int freshness_seconds);
         void run();
         virtual ~Producer();
     protected:
     private:
         string generateContent(const int length);
         void onInterest(const InterestFilter& filter, const Interest& interest);
-        void onRegisterFailed(const Name& prefix, const std::string& reason);
+        void onRegisterFailed(const Name& prefix, const string& reason);
 
         Face m_face;
         KeyChain m_keyChain;
         string prefix;
+        string document_root;
         int data_size;
         int freshness_seconds;
 };
