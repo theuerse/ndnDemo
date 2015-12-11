@@ -3,7 +3,7 @@
 ndn::Producer::Producer(string prefix, string document_root, int data_size, int freshness_seconds)
 {
     this->prefix = prefix;
-    this->document_root = document_root;
+    this->document_root =  (document_root.back() == '/') ? document_root : document_root + "/";
     this-> data_size = data_size;
     this->freshness_seconds = freshness_seconds;
 }
@@ -43,8 +43,29 @@ string ndn::Producer::generateContent(const int length)
 // get file-content
 string ndn::Producer::getFileContent(string interestName)
 {
-    boost::filesystem::path sourcePath(this->document_root + "/" + interestName);
-    cout << "trying to get " << sourcePath << endl;
+    string filePath = this->document_root;
+    vector<string> strs;
+    boost::split(strs,interestName,boost::is_any_of("/"));
+
+    // check if last segment contains an int / chunk-index was given
+    int chunk_index = 0;
+    try {
+        chunk_index = boost::lexical_cast<int>(strs.back());
+        strs.pop_back(); // throw away chunk-index info
+    } catch( boost::bad_lexical_cast const& ) {
+        cout << "Info: no chunk-index given, using default of 0" << endl;
+    }
+
+    cout << "chunk-index: " << chunk_index << endl;
+
+    strs.erase(strs.begin()); // throw away prefix
+    // TODO: support multiple level prefix e.g. /ndn101/bla as prefix?
+    for(vector<string>::iterator it = strs.begin()+1;it!=strs.end();++it){
+        filePath += (next(it) == strs.end()) ? *it : *it + "/";
+    }
+
+    boost::filesystem::path sourcePath(filePath);
+    cout << "trying to get chunk number " << chunk_index << " of file " << sourcePath << endl;
     return "ok";
 }
 
@@ -58,7 +79,8 @@ void ndn::Producer::onInterest(const InterestFilter& filter, const Interest& int
 
     // DEBUG: have a look at infos in Interest
     cout << "Interest-name:" << interest.getName() << endl;
-    // TODO: string cast? string aha = ndn::Producer::getFileContent(interest.getName());
+    getFileContent(interest.getName().toUri());
+
 
     dataName.appendVersion();  // add "version" component (current UNIX timestamp in milliseconds)
 

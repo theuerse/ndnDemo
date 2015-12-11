@@ -16,7 +16,7 @@ using namespace std;
 using namespace boost::program_options;
 
 namespace ndn {
-class Consumer
+class Consumer : noncopyable
 {
     public:
         Consumer(string interest_name, int interest_lifetime);
