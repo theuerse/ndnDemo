@@ -43,7 +43,7 @@ string ndn::Producer::generateContent(const int length)
 // get file-content
 string ndn::Producer::getFileContent(string interestName)
 {
-    string filePath = this->document_root;
+    string file_path = this->document_root;
     vector<string> strs;
     boost::split(strs,interestName,boost::is_any_of("/"));
 
@@ -61,11 +61,45 @@ string ndn::Producer::getFileContent(string interestName)
     strs.erase(strs.begin()); // throw away prefix
     // TODO: support multiple level prefix e.g. /ndn101/bla as prefix?
     for(vector<string>::iterator it = strs.begin()+1;it!=strs.end();++it){
-        filePath += (next(it) == strs.end()) ? *it : *it + "/";
+        file_path += (next(it) == strs.end()) ? *it : *it + "/";
     }
 
-    boost::filesystem::path sourcePath(filePath);
-    cout << "trying to get chunk number " << chunk_index << " of file " << sourcePath << endl;
+    cout << "trying to get chunk number " << chunk_index << " of file " << file_path << endl;
+
+    // try to open file
+     ifstream inputStream;
+    inputStream.open(file_path, ios::binary);
+
+    // get length of file:
+    inputStream.seekg (0, inputStream.end);
+    int file_length = inputStream.tellg();
+    cout << "file_length:" << file_length  << "byte(s)"<< endl;
+
+    // cope with over-shooting
+    int chunk_count = ceil((double)file_length / (double)this->data_size);
+    cout << "chunk_count " << chunk_count << endl;
+    if(chunk_index > chunk_count-1){
+        cout << "out of bounds" << endl;
+        return "out of bounds";
+    }
+
+
+    inputStream.seekg(this->data_size * chunk_index); // seek
+    int pos = inputStream.tellg();
+    cout << "lesen ab position " << pos << endl;
+
+    int buffer_size = min(file_length - pos, this->data_size);
+    char * buffer = new char [buffer_size];
+
+    inputStream.read (buffer,this->data_size);
+    cout << "buffersize: " << buffer_size << endl;
+    cout << buffer << endl;
+    //inputStream.read(data_size);
+    inputStream.close();
+    cout << "first: " << buffer[0] <<", last(" << buffer_size-1 << "): " << buffer[buffer_size -1] << endl;
+
+    delete[] buffer;
+    cout << "done" << endl;
     return "ok";
 }
 

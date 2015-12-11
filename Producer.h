@@ -8,6 +8,11 @@
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
 
+// file-stream
+#include <fstream>
+
+#include <math.h>
+
 // using boost for file-system handling / cmd_options
 #include "boost/program_options.hpp"
 #include "boost/filesystem.hpp"

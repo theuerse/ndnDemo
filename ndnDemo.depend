@@ -1,12 +1,16 @@
 # depslib dependency file v1.0
-1449734556 source:/home/theuers/ndnDemo/Producer.cpp
+1449829200 source:/home/theuers/ndnDemo/Producer.cpp
 	"Producer.h"
 
-1449734573 /home/theuers/ndnDemo/Producer.h
+1449828436 /home/theuers/ndnDemo/Producer.h
 	<ndn-cxx/face.hpp>
 	<ndn-cxx/security/key-chain.hpp>
+	<fstream>
+	<math.h>
 	"boost/program_options.hpp"
 	"boost/filesystem.hpp"
+	"boost/algorithm/string.hpp"
+	"boost/lexical_cast.hpp"
 
 1441037258 /usr/local/include/ndn-cxx/face.hpp
 	"common.hpp"
@@ -35,7 +39,7 @@
 	<boost/noncopyable.hpp>
 	<boost/throw_exception.hpp>
 
-1449481537 /usr/local/include/ndn-cxx/ndn-cxx-config.hpp
+1449578897 /usr/local/include/ndn-cxx/ndn-cxx-config.hpp
 
 1441037258 /usr/local/include/ndn-cxx/name.hpp
 	"common.hpp"
@@ -278,10 +282,10 @@
 1441037258 /usr/local/include/ndn-cxx/util/random.hpp
 	"../common.hpp"
 
-1449728924 source:/home/theuers/ndnDemo/Consumer.cpp
+1449736756 source:/home/theuers/ndnDemo/Consumer.cpp
 	"Consumer.h"
 
-1449815330 /home/theuers/ndnDemo/Consumer.h
+1449822124 /home/theuers/ndnDemo/Consumer.h
 	<ndn-cxx/face.hpp>
 	<ndn-cxx/security/key-chain.hpp>
 	"boost/program_options.hpp"
