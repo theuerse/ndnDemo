@@ -41,7 +41,7 @@ string ndn::Producer::generateContent(const int length)
 }
 
 // get file-content
-string ndn::Producer::getFileContent(string interestName)
+bool ndn::Producer::getFileContent(string interestName)
 {
     string file_path = this->document_root;
     vector<string> strs;
@@ -80,7 +80,7 @@ string ndn::Producer::getFileContent(string interestName)
     cout << "chunk_count " << chunk_count << endl;
     if(chunk_index > chunk_count-1){
         cout << "out of bounds" << endl;
-        return "out of bounds";
+        return false;
     }
 
 
@@ -88,19 +88,18 @@ string ndn::Producer::getFileContent(string interestName)
     int pos = inputStream.tellg();
     cout << "lesen ab position " << pos << endl;
 
-    int buffer_size = min(file_length - pos, this->data_size);
-    char * buffer = new char [buffer_size];
+    this->buffer_size = min(file_length - pos, this->data_size);
+    this->buffer = new char [this->buffer_size];
 
-    inputStream.read (buffer,this->data_size);
-    cout << "buffersize: " << buffer_size << endl;
-    cout << buffer << endl;
+    inputStream.read (this->buffer,this->data_size);
+    cout << "buffersize: " << this->buffer_size << endl;
+    cout << this->buffer << endl;
     //inputStream.read(data_size);
     inputStream.close();
-    cout << "first: " << buffer[0] <<", last(" << buffer_size-1 << "): " << buffer[buffer_size -1] << endl;
+    cout << "first: " << this->buffer[0] <<", last(" << this->buffer_size-1 << "): " << this->buffer[this->buffer_size -1] << endl;
 
-    delete[] buffer;
     cout << "done" << endl;
-    return "ok";
+    return true;
 }
 
 // react to arrival of a Interest-Package
@@ -113,24 +112,27 @@ void ndn::Producer::onInterest(const InterestFilter& filter, const Interest& int
 
     // DEBUG: have a look at infos in Interest
     cout << "Interest-name:" << interest.getName() << endl;
-    getFileContent(interest.getName().toUri());
+    if(getFileContent(interest.getName().toUri())){
+        dataName.appendVersion();  // add "version" component (current UNIX timestamp in milliseconds)
 
+        //string content = generateContent(data_size); // fake data creation
 
-    dataName.appendVersion();  // add "version" component (current UNIX timestamp in milliseconds)
+        // Create Data packet
+        shared_ptr<Data> data = make_shared<Data>();
+        data->setName(dataName);
+        data->setFreshnessPeriod(time::seconds(freshness_seconds));
+        //data->setContent(reinterpret_cast<const uint8_t*>(content.c_str()), content.size());
+        data->setContent(reinterpret_cast<const uint8_t*>(this->buffer), this->buffer_size);
 
-    string content = generateContent(data_size);
+        // Sign Data packet with default identity
+        m_keyChain.sign(*data);
 
-    // Create Data packet
-    shared_ptr<Data> data = make_shared<Data>();
-    data->setName(dataName);
-    data->setFreshnessPeriod(time::seconds(freshness_seconds));
-    data->setContent(reinterpret_cast<const uint8_t*>(content.c_str()), content.size());
+        // Return Data packet
+        m_face.put(*data);
 
-    // Sign Data packet with default identity
-    m_keyChain.sign(*data);
-
-    // Return Data packet
-    m_face.put(*data);
+        // remove buffer
+        delete[] buffer; //TODO: memory leak?
+    }
 }
 
 // react to failure of prefix-registration

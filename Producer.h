@@ -34,7 +34,7 @@ class Producer : noncopyable
         string generateContent(const int length);
         void onInterest(const InterestFilter& filter, const Interest& interest);
         void onRegisterFailed(const Name& prefix, const string& reason);
-        string getFileContent(string interestName);
+        bool getFileContent(string interestName);
 
         Face m_face;
         KeyChain m_keyChain;
@@ -42,6 +42,8 @@ class Producer : noncopyable
         string document_root;
         int data_size;
         int freshness_seconds;
+        int buffer_size;
+        char* buffer;
 };
 }   // end namespace ndn
 

@@ -33,7 +33,17 @@ void ndn::Consumer::run()
 // react to the reception of a reply from a Producer
 void ndn::Consumer::onData(const Interest& interest, const Data& data)
 {
-    cout << data << endl;
+    cout << "data-packet received: " << endl;
+    Block block;
+    size_t buffer_size;
+    const u_int8_t* buffer;
+
+    block = data.getContent();
+    buffer = block.wire();
+    buffer_size = block.size();
+
+    for(int i = 0; i < buffer_size; i++)
+        cout << (char)buffer[i];
 }
 
 // react on the request / Interest timing out
