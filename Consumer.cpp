@@ -34,16 +34,10 @@ void ndn::Consumer::run()
 void ndn::Consumer::onData(const Interest& interest, const Data& data)
 {
     cout << "data-packet received: " << endl;
-    Block block;
-    size_t buffer_size;
-    const u_int8_t* buffer;
 
-    block = data.getContent();
-    buffer = block.wire();
-    buffer_size = block.size();
-
-    for(int i = 0; i < buffer_size; i++)
-        cout << (char)buffer[i];
+    const Block& block = data.getContent();
+    std::cout.write((const char*)block.value(),block.value_size());
+    cout << endl;
 }
 
 // react on the request / Interest timing out
