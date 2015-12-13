@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1450041570 source:/home/theuers/ndnDemo/Producer.cpp
+1450045720 source:/home/theuers/ndnDemo/Producer.cpp
 	"Producer.h"
 
 1450041336 /home/theuers/ndnDemo/Producer.h
@@ -282,10 +282,19 @@
 1441037258 /usr/local/include/ndn-cxx/util/random.hpp
 	"../common.hpp"
 
-1449736756 source:/home/theuers/ndnDemo/Consumer.cpp
+1449834254 source:/home/theuers/ndnDemo/Consumer.cpp
 	"Consumer.h"
 
 1449822124 /home/theuers/ndnDemo/Consumer.h
+	<ndn-cxx/face.hpp>
+	<ndn-cxx/security/key-chain.hpp>
+	"boost/program_options.hpp"
+	"boost/filesystem.hpp"
+
+1450046244 source:/home/theuers/ndnDemo/FileConsumer.cpp
+	"FileConsumer.h"
+
+1450046298 /home/theuers/ndnDemo/FileConsumer.h
 	<ndn-cxx/face.hpp>
 	<ndn-cxx/security/key-chain.hpp>
 	"boost/program_options.hpp"
