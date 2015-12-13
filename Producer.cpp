@@ -3,7 +3,7 @@
 ndn::Producer::Producer(string prefix, string document_root, int data_size, int freshness_seconds)
 {
     this->prefix = prefix;
-    this->document_root =  (document_root.back() == '/') ? document_root : document_root + "/";
+    this->document_root =  (document_root.back() == '/') ? document_root.erase(document_root.size()-1) : document_root;
     this-> data_size = data_size;
     this->freshness_seconds = freshness_seconds;
 }
@@ -41,50 +41,45 @@ string ndn::Producer::generateContent(const int length)
 }
 
 // get file-content
-bool ndn::Producer::getFileContent(string interestName)
+bool ndn::Producer::getFileContent(const Interest& interest)
 {
-    string file_path = this->document_root;
-    vector<string> strs;
-    boost::split(strs,interestName,boost::is_any_of("/"));
+    Name interestName = interest.getName();
 
-    // check if last segment contains an int / chunk-index was given
-    int chunk_index = 0;
+    // get last sequence number
+    string lastPostfix = interestName.getSubName(interestName.size() -1).toUri().erase(0,1);
+    int seq_nr = 0;
     try {
-        chunk_index = boost::lexical_cast<int>(strs.back());
-        strs.pop_back(); // throw away chunk-index info
+        seq_nr = boost::lexical_cast<int>(lastPostfix);
+        interestName = interestName.getPrefix(-1); // throw away seq_nr info
     } catch( boost::bad_lexical_cast const& ) {
-        cout << "Info: no chunk-index given, using default of 0" << endl;
+        cout << "Info: no seq_nr given, using default of 0" << endl;
     }
+    cout << "Info: seq-nr: " << seq_nr << endl;
 
-    cout << "chunk-index: " << chunk_index << endl;
-
-    strs.erase(strs.begin()); // throw away prefix
-    // TODO: support multiple level prefix e.g. /ndn101/bla as prefix?
-    for(vector<string>::iterator it = strs.begin()+1;it!=strs.end();++it){
-        file_path += (next(it) == strs.end()) ? *it : *it + "/";
-    }
-
-    cout << "trying to get chunk number " << chunk_index << " of file " << file_path << endl;
+    // get remaining filename (ignore prefix) //TODO: support multiple level prefix?
+    string file_path = this->document_root + interestName.getSubName(1).toUri();
+    cout << "opening " << file_path << endl;
 
     // try to open file
-     ifstream inputStream;
+    ifstream inputStream;
+    cout << "opening file: " << file_path << endl;
     inputStream.open(file_path, ios::binary);
 
     // get length of file:
     inputStream.seekg (0, inputStream.end);
     int file_length = inputStream.tellg();
-    cout << "file_length:" << file_length  << "byte(s)"<< endl;
+    cout << "file_length:" << file_length  << " byte(s)"<< endl;
 
-    // cope with over-shooting
+    // cope with request of chunk who doesn't exists
     int chunk_count = ceil((double)file_length / (double)this->data_size);
     cout << "chunk_count " << chunk_count << endl;
-    if(chunk_index > chunk_count-1){
+    if(seq_nr > chunk_count-1){
         cout << "out of bounds" << endl;
         return false;
     }
 
 
-    inputStream.seekg(this->data_size * chunk_index); // seek
+    inputStream.seekg(this->data_size * seq_nr); // seek
     int pos = inputStream.tellg();
     cout << "lesen ab position " << pos << endl;
 
@@ -112,7 +107,7 @@ void ndn::Producer::onInterest(const InterestFilter& filter, const Interest& int
 
     // DEBUG: have a look at infos in Interest
     cout << "Interest-name:" << interest.getName() << endl;
-    if(getFileContent(interest.getName().toUri())){
+    if(getFileContent(interest)){
         dataName.appendVersion();  // add "version" component (current UNIX timestamp in milliseconds)
 
         //string content = generateContent(data_size); // fake data creation

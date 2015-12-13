@@ -34,7 +34,7 @@ class Producer : noncopyable
         string generateContent(const int length);
         void onInterest(const InterestFilter& filter, const Interest& interest);
         void onRegisterFailed(const Name& prefix, const string& reason);
-        bool getFileContent(string interestName);
+        bool getFileContent(const Interest& interest);
 
         Face m_face;
         KeyChain m_keyChain;
