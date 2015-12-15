@@ -1,9 +1,10 @@
 #include "Consumer.h"
 // public methods
-ndn::Consumer::Consumer(string interest_name, int interest_lifetime)
+ndn::Consumer::Consumer(string interest_name, int seq_nr, int interest_lifetime)
 {
     this->interest_name = interest_name;
     this->interest_lifetime = interest_lifetime;
+    this->seq_nr = seq_nr;
 }
 
 ndn::Consumer::~Consumer()
@@ -14,7 +15,7 @@ ndn::Consumer::~Consumer()
 // register prefix on NFD
 void ndn::Consumer::run()
 {
-    Interest interest(Name(this->interest_name));  // e.g. "/example/testApp/randomData"
+    Interest interest(Name(this->interest_name).appendSequenceNumber(this->seq_nr));  // e.g. "/example/testApp/randomData"
     interest.setInterestLifetime(time::milliseconds(this->interest_lifetime));   // time::milliseconds(1000)
     interest.setMustBeFresh(true);
 
@@ -100,8 +101,22 @@ int main(int argc, char** argv)
     lifetime = vm["lifetime"].as<int>();
   }
 
-  // create new Consumer instance with given parameters
-  ndn::Consumer consumer(vm["name"].as<string>(),lifetime);
+  // create new FileConsumer instance with given parameters
+  // get sequence number
+    string name = vm["name"].as<string>();
+    vector<string> parts;
+    boost::split(parts, name, boost::is_any_of("/"));
+    int seq_nr = 0;
+    try {
+        seq_nr = boost::lexical_cast<int>(parts[parts.size()-1]);
+        name = name.erase(name.find_last_of('/'));
+    } catch( boost::bad_lexical_cast const& ) {
+        cout << "Info: no seq_nr given, using default of 0" << endl;
+    }
+    cout << "Info: seq-nr: " << seq_nr << endl;
+
+    cout << "name: " << name << endl;
+    ndn::Consumer consumer(name,seq_nr,lifetime);
 
   try
   {

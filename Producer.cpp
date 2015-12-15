@@ -41,19 +41,16 @@ string ndn::Producer::generateContent(const int length)
 }
 
 // get file-content
-bool ndn::Producer::getFileContent(const Interest& interest)
+ndn::Producer::file_chunk_t ndn::Producer::getFileContent(const Interest& interest)
 {
+    file_chunk_t result;
+    char* buffer;
+    int buffer_size;
     Name interestName = interest.getName();
 
     // get last sequence number
-    string lastPostfix = interestName.getSubName(interestName.size() -1).toUri().erase(0,1);
-    int seq_nr = 0;
-    try {
-        seq_nr = boost::lexical_cast<int>(lastPostfix);
-        interestName = interestName.getPrefix(-1); // throw away seq_nr info
-    } catch( boost::bad_lexical_cast const& ) {
-        cout << "Info: no seq_nr given, using default of 0" << endl;
-    }
+    int seq_nr = interestName.at(-1).toSequenceNumber();
+    interestName = interestName.getPrefix(-1); // remove seq-Nr
     cout << "Info: seq-nr: " << seq_nr << endl;
 
     // get remaining filename (ignore prefix) //TODO: support multiple level prefix?
@@ -75,7 +72,8 @@ bool ndn::Producer::getFileContent(const Interest& interest)
     cout << "chunk_count " << chunk_count << endl;
     if(seq_nr > chunk_count-1){
         cout << "out of bounds" << endl;
-        return false;
+        result.success=false;
+        return result;
     }
 
 
@@ -83,18 +81,22 @@ bool ndn::Producer::getFileContent(const Interest& interest)
     int pos = inputStream.tellg();
     cout << "lesen ab position " << pos << endl;
 
-    this->buffer_size = min(file_length - pos, this->data_size);
-    this->buffer = new char [this->buffer_size];
+    buffer_size = min(file_length - pos, this->data_size);
+    buffer = new char [buffer_size];
 
-    inputStream.read (this->buffer,this->data_size);
-    cout << "buffersize: " << this->buffer_size << endl;
-    cout << this->buffer << endl;
+    inputStream.read (buffer,buffer_size);
+    cout << "buffersize: " << buffer_size << endl;
+    cout << buffer << endl;
     //inputStream.read(data_size);
     inputStream.close();
-    cout << "first: " << this->buffer[0] <<", last(" << this->buffer_size-1 << "): " << this->buffer[this->buffer_size -1] << endl;
+    cout << "first: " << buffer[0] <<", last(" << buffer_size-1 << "): " << buffer[buffer_size -1] << endl;
 
     cout << "done" << endl;
-    return true;
+    result.success = true;
+    result.buffer_size = buffer_size;
+    result.buffer = buffer;
+    result.final_block_id = chunk_count;
+    return result;
 }
 
 // react to arrival of a Interest-Package
@@ -107,7 +109,9 @@ void ndn::Producer::onInterest(const InterestFilter& filter, const Interest& int
 
     // DEBUG: have a look at infos in Interest
     cout << "Interest-name:" << interest.getName() << endl;
-    if(getFileContent(interest)){
+
+    file_chunk_t result = getFileContent(interest);
+    if(result.success){
         dataName.appendVersion();  // add "version" component (current UNIX timestamp in milliseconds)
 
         //string content = generateContent(data_size); // fake data creation
@@ -117,7 +121,10 @@ void ndn::Producer::onInterest(const InterestFilter& filter, const Interest& int
         data->setName(dataName);
         data->setFreshnessPeriod(time::seconds(freshness_seconds));
         //data->setContent(reinterpret_cast<const uint8_t*>(content.c_str()), content.size());
-        data->setContent(reinterpret_cast<const uint8_t*>(this->buffer), this->buffer_size);
+        data->setContent(reinterpret_cast<const uint8_t*>(result.buffer), result.buffer_size);
+        ndn::name::Component cmp = ndn::Name::Component(std::to_string(result.final_block_id));
+        cout << "finalBlockId: " << cmp << endl;
+        data->setFinalBlockId(cmp);
 
         // Sign Data packet with default identity
         m_keyChain.sign(*data);
@@ -126,7 +133,7 @@ void ndn::Producer::onInterest(const InterestFilter& filter, const Interest& int
         m_face.put(*data);
 
         // remove buffer
-        delete[] buffer; //TODO: memory leak?
+        delete[] result.buffer; //TODO: memory leak?
     }
 }
 

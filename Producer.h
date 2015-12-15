@@ -16,8 +16,6 @@
 // using boost for file-system handling / cmd_options
 #include "boost/program_options.hpp"
 #include "boost/filesystem.hpp"
-#include "boost/algorithm/string.hpp"
-#include "boost/lexical_cast.hpp"
 
 using namespace std;
 using namespace boost::program_options;
@@ -31,10 +29,17 @@ class Producer : noncopyable
         virtual ~Producer();
     protected:
     private:
+        struct file_chunk_t {
+            bool success;
+            char  *buffer;
+            int buffer_size;
+            int final_block_id;
+        };
+
         string generateContent(const int length);
         void onInterest(const InterestFilter& filter, const Interest& interest);
         void onRegisterFailed(const Name& prefix, const string& reason);
-        bool getFileContent(const Interest& interest);
+        file_chunk_t getFileContent(const Interest& interest);
 
         Face m_face;
         KeyChain m_keyChain;
@@ -42,8 +47,6 @@ class Producer : noncopyable
         string document_root;
         int data_size;
         int freshness_seconds;
-        int buffer_size;
-        char* buffer;
 };
 }   // end namespace ndn
 

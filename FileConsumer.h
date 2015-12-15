@@ -12,6 +12,10 @@
 #include "boost/program_options.hpp"
 #include "boost/filesystem.hpp"
 
+// string ops
+#include "boost/algorithm/string.hpp"
+#include "boost/lexical_cast.hpp"
+
 using namespace std;
 using namespace boost::program_options;
 
@@ -19,7 +23,7 @@ namespace ndn {
 class FileConsumer : noncopyable
 {
     public:
-        FileConsumer(string interest_name, int interest_lifetime);
+        FileConsumer(string interest_name, int seq_nr, int interest_lifetime);
         void run();
         virtual ~FileConsumer();
     protected:
@@ -29,7 +33,10 @@ class FileConsumer : noncopyable
 
         Face m_face;
         string interest_name;
+        int seq_nr;
         int interest_lifetime;
+        bool first_data_received = true;
+        char* buffer;
 };
 }   // end namespace ndn
 

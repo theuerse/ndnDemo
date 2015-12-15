@@ -1,9 +1,10 @@
 #include "FileConsumer.h"
 // public methods
-ndn::FileConsumer::FileConsumer(string interest_name, int interest_lifetime)
+ndn::FileConsumer::FileConsumer(string interest_name, int seq_nr, int interest_lifetime)
 {
     this->interest_name = interest_name;
     this->interest_lifetime = interest_lifetime;
+    this->seq_nr = seq_nr;
 }
 
 ndn::FileConsumer::~FileConsumer()
@@ -14,7 +15,8 @@ ndn::FileConsumer::~FileConsumer()
 // register prefix on NFD
 void ndn::FileConsumer::run()
 {
-    Interest interest(Name(this->interest_name));  // e.g. "/example/testApp/randomData"
+    Interest interest(Name(this->interest_name).appendSequenceNumber(this->seq_nr));  // e.g. "/example/testApp/randomData"
+    // appendSequenceNumber
     interest.setInterestLifetime(time::milliseconds(this->interest_lifetime));   // time::milliseconds(1000)
     interest.setMustBeFresh(true);
 
@@ -35,9 +37,15 @@ void ndn::FileConsumer::onData(const Interest& interest, const Data& data)
 {
     cout << "data-packet received: " << endl;
 
+    if(this->first_data_received){
+        // allocate space!!
+        this->first_data_received = false;
+        //this->
+    }
     const Block& block = data.getContent();
     std::cout.write((const char*)block.value(),block.value_size());
     cout << endl;
+    cout << "finalBlockId: " << data.getFinalBlockId() << endl;
 }
 
 // react on the request / Interest timing out
@@ -101,11 +109,25 @@ int main(int argc, char** argv)
   }
 
   // create new FileConsumer instance with given parameters
-  ndn::FileConsumer consumer(vm["name"].as<string>(),lifetime);
+  // get sequence number
+    string name = vm["name"].as<string>();
+    vector<string> parts;
+    boost::split(parts, name, boost::is_any_of("/"));
+    int seq_nr = 0;
+    try {
+        seq_nr = boost::lexical_cast<int>(parts[parts.size()-1]);
+        name = name.erase(name.find_last_of('/'));
+    } catch( boost::bad_lexical_cast const& ) {
+        cout << "Info: no seq_nr given, using default of 0" << endl;
+    }
+    cout << "Info: seq-nr: " << seq_nr << endl;
+
+    cout << "name: " << name << endl;
+    ndn::FileConsumer consumer(name,seq_nr,lifetime);
 
   try
   {
-    // start producer
+    // start file consumer
     consumer.run();
   }
   catch (const exception& e)
